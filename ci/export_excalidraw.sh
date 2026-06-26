@@ -25,6 +25,39 @@ echo "Output root: $OUTPUT_ROOT"
 echo "Extractor:   $EXTRACT_SCRIPT"
 echo "Playwright:  $PLAYWRIGHT_BROWSERS_PATH"
 
+run_excalidraw_export() {
+  local input_file="$1"
+  local output_file="$2"
+  local format="$3"
+
+  local attempt=1
+  local max_attempts=3
+
+  while [ "$attempt" -le "$max_attempts" ]; do
+    echo "    Export $format attempt $attempt/$max_attempts"
+
+    if excalidraw-brute-export-cli \
+      -i "$input_file" \
+      -o "$output_file" \
+      -f "$format" \
+      -s 2 \
+      -b true \
+      -e true \
+      -d false \
+      --excalidraw-version 0.17.0 \
+      --timeout 120000; then
+      return 0
+    fi
+
+    echo "    WARN: Export $format failed on attempt $attempt"
+    attempt=$((attempt + 1))
+    sleep 5
+  done
+
+  echo "    ERROR: Export $format failed after $max_attempts attempts: $input_file" >&2
+  return 1
+}
+
 find "$SOURCE_ROOT" \
   \( \
     -path "$SOURCE_ROOT/.git" -o \
@@ -79,23 +112,8 @@ while IFS= read -r -d '' input_file; do
     fi
   fi
 
-  excalidraw-brute-export-cli \
-    -i "$out_excalidraw" \
-    -o "$out_svg" \
-    -f svg \
-    -s 2 \
-    -b true \
-    -e true \
-    -d false
-
-  excalidraw-brute-export-cli \
-    -i "$out_excalidraw" \
-    -o "$out_png" \
-    -f png \
-    -s 2 \
-    -b true \
-    -e true \
-    -d false
+  run_excalidraw_export "$out_excalidraw" "$out_svg" "svg"
+  run_excalidraw_export "$out_excalidraw" "$out_png" "png"
 
   inkscape "$out_svg" \
     --export-type=pdf \
