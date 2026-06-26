@@ -115,10 +115,16 @@ while IFS= read -r -d '' input_file; do
   run_excalidraw_export "$out_excalidraw" "$out_svg" "svg"
   run_excalidraw_export "$out_excalidraw" "$out_png" "png"
 
-  inkscape "$out_svg" \
+  clean_svg="$(mktemp --suffix=.svg)"
+  python3 "$SCRIPT_DIR/clean_svg_for_inkscape.py" "$out_svg" "$clean_svg"
+
+  inkscape "$clean_svg" \
     --export-type=pdf \
     --export-filename="$out_pdf" \
+    --export-area-page \
     --export-text-to-path
+
+  rm -f "$clean_svg"
 
   chmod 664 "$out_excalidraw" "$out_svg" "$out_png" "$out_pdf" || true
 
