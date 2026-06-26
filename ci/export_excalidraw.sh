@@ -115,6 +115,12 @@ while IFS= read -r -d '' input_file; do
   run_excalidraw_export "$out_excalidraw" "$out_svg" "svg"
   run_excalidraw_export "$out_excalidraw" "$out_png" "png"
 
+  if ! fc-match Excalifont | grep -qi "Excalifont"; then
+    echo "    ERROR: Excalifont ist für Inkscape/fontconfig nicht installiert oder nicht auffindbar." >&2
+    echo "    Prüfe: fc-match Excalifont" >&2
+    exit 1
+  fi
+
   clean_svg="$(mktemp --suffix=.svg)"
   python3 "$SCRIPT_DIR/clean_svg_for_inkscape.py" "$out_svg" "$clean_svg"
 
